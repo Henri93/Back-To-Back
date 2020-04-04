@@ -754,8 +754,10 @@ jQuery(function($){
             endGame : function(data) {
                 if(data.agentLost){
                     $('#gameArea').html('<div class="gameOver">The Secret Agent Was Killed!</div>');
+                    $("#winAudio")[0].play()
                 } else {
                     $('#gameArea').html('<div class="gameOver">The Secret Agent Won!</div>');
+                    $("#loseAudio")[0].play()
                 }
             }
         },
