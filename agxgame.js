@@ -266,11 +266,9 @@ function getWordData(i){
  */
 var wordPool = [
     "Make a face like you're farting",
-    "Make a face like you're happy",
-    "Make a face like you're sad",
     "Make a face like you're sucking in air",
     "Make a face like you're crying",
-    "Make a face like you're falling",
+    "Make a face like you're holding in a tird",
     "Make a face like you smell trash",
     "Make a face like you ate a habanero pepper",
     "Make a face like you just heard the professor fart while teaching",
@@ -284,4 +282,7 @@ var wordPool = [
     "Make a face like you haven’t slept in days",
     "Make a face like you hear a burglar come into the house", 
     "Make a face like you touched a hot pan",
+    "Make a face like you are cross-eye",
+    "Make a face like you are peeing",
+    "Make a face like you are reading something very small"
 ]

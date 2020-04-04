@@ -248,7 +248,8 @@ html, body {
     /*height: 100%;*/
     width: 100%;
     font-size: 5em;
-    color: #fff;
+    color: #c72c41;
+    font-family: 'Montserrat', sans-serif;
 }
 
 #hostWord h2, #btnPlayerRestart h3 {

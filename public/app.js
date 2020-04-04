@@ -228,7 +228,7 @@ jQuery(function($){
          */
         showInitScreen: function() {
             App.$gameArea.html(App.$templateIntroScreen);
-            App.doTextFit('.title');
+            App.doTextFit($('.title'));
         },
 
         onLeaderboardClick : function(){
@@ -239,7 +239,7 @@ jQuery(function($){
         onBackClick : function()
         {
           App.$gameArea.html(App.$templateIntroScreen);
-          App.doTextFit('.title');
+          App.doTextFit($('.title'));
         },
         /* *******************************
            *         HOST CODE           *
@@ -299,7 +299,7 @@ jQuery(function($){
 
                 // Display the URL on screen
                 $('#gameURL').text(window.location.href);
-                App.doTextFit('#gameURL');
+                App.doTextFit($('#gameURL'));
 
                 // Show the gameId / room id on screen
                 $('#spanNewGameCode').text(App.gameId);
@@ -349,7 +349,7 @@ jQuery(function($){
                 // Prepare the game screen with new HTML
                 //TODO change this ui to display all players
                 App.$gameArea.html(App.$hostGame);
-                App.doTextFit('#hostWord');
+                App.doTextFit($('#hostWord'));
                 $('#roundCount').remove();
 
                 // Begin the on-screen countdown timer
@@ -485,7 +485,7 @@ jQuery(function($){
                     $('#hostWord').text("The Secret Agent Won!");
                     data.winner=App.Host.currentAgent;
                 }
-                App.doTextFit('#hostWord');
+                App.doTextFit($('#hostWord'));
                 
                 if(data.done>0)
                 {
@@ -659,17 +659,17 @@ jQuery(function($){
                 if(App.Player.isSecret){
                     $('#wordArea').prepend("<h2 style='color: #fff;'>You are the secret agent!<h2/>")
                     $('#hostWord').text(data.secretMsg);
-                    App.doTextFit('#hostWord');
+                    App.doTextFit($('#hostWord'));
                 }else{
                     $('#hostWord').text(data.regMsg);
-                    App.doTextFit('#hostWord');
+                    App.doTextFit($('#hostWord'));
                 }
 
                 $("#faceAudio")[0].play()
                 
                 // Begin the on-screen countdown timer
                 var $secondsLeft = $('#roundCount');
-                App.doTextFit('#roundCount');
+                App.doTextFit($('#roundCount'));
                 App.countDown($secondsLeft, 10, function(){
                     //make noise and send to voting screen
                     $("#voteAudio")[0].play()
@@ -717,7 +717,12 @@ jQuery(function($){
 
                     // Insert the list onto the screen.
                     $('#gameArea').html($('#playerScores'))
+                    $('#gameArea').append($secondsLeft)
                     $('#gameArea').append($list);
+                    
+                    App.countDown($secondsLeft, 60, function(){
+                        //vote countdown
+                    })
                 });
             },
 
@@ -771,7 +776,7 @@ jQuery(function($){
 
             // Display the starting time on the screen.
             $el.text(startTime);
-            App.doTextFit('#hostWord');
+            App.doTextFit($el);
 
             // console.log('Starting Countdown...');
 
@@ -782,7 +787,7 @@ jQuery(function($){
             function countItDown(){
                 startTime -= 1
                 $el.text(startTime);
-                App.doTextFit('#hostWord');
+                App.doTextFit($el);
 
                 if( startTime <= 0 ){
                     // console.log('Countdown Finished.');
@@ -804,7 +809,7 @@ jQuery(function($){
          */
         doTextFit : function(el) {
             textFit(
-                $(el)[0],
+                el[0],
                 {
                     alignHoriz:true,
                     alignVert:false,
