@@ -27,6 +27,7 @@ jQuery(function($){
             IO.socket.on('newGameCreated', IO.onNewGameCreated );
             IO.socket.on('playerJoinedRoom', IO.playerJoinedRoom );
             IO.socket.on('beginNewGame', IO.beginNewGame );
+            IO.socket.on('secretAgent', IO.secretAgent );
             IO.socket.on('newWordData', IO.onNewWordData);
             IO.socket.on('hostCheckAnswer', IO.hostCheckAnswer);
             IO.socket.on('gameOver', IO.gameOver);
@@ -88,6 +89,12 @@ jQuery(function($){
          */
         beginNewGame : function(data) {
             App[App.myRole].gameCountdown(data);
+        },
+
+        secretAgent : function(name) {
+            if(App.myRole === 'Player' && App.Player.myName === name){
+                App.Player.assignSecret();
+            }
         },
 
         /**
@@ -194,6 +201,7 @@ jQuery(function($){
         bindEvents: function () {
             // Host
             App.$doc.on('click', '#btnCreateGame', App.Host.onCreateClick);
+            App.$doc.on('click', '#btnStartGame', App.Host.startGame);
 
             // Player
             App.$doc.on('click', '#btnJoinGame', App.Player.onJoinClick);
@@ -311,13 +319,19 @@ jQuery(function($){
                 // Increment the number of players in the room
                 App.Host.numPlayersInRoom += 1;
 
-                // If two players have joined, start the game!
-                if (App.Host.numPlayersInRoom === 2) {
-                    // console.log('Room is full. Almost ready!');
+                // // If two players have joined, start the game!
+                // if (App.Host.numPlayersInRoom === 2) {
+                //     // console.log('Room is full. Almost ready!');
+                // }
+            },
 
-                    // Let the server know that two players are present.
-                    IO.socket.emit('hostRoomFull',App.gameId);
-                }
+            /**
+             * The Host clicked to start the game
+             */
+            startGame: function (data) {
+                // Let the server know that two players are present.
+                console.log("Host starting game")
+                IO.socket.emit('hostRoomFull',App.gameId);
             },
 
             /**
@@ -326,27 +340,40 @@ jQuery(function($){
             gameCountdown : function() {
 
                 // Prepare the game screen with new HTML
+                //TODO change this ui to display all players
                 App.$gameArea.html(App.$hostGame);
                 App.doTextFit('#hostWord');
 
                 // Begin the on-screen countdown timer
                 var $secondsLeft = $('#hostWord');
-                App.countDown( $secondsLeft, 5, function(){
+                App.countDown( $secondsLeft, 10, function(){
                     IO.socket.emit('hostCountdownFinished', App.gameId);
                 });
 
+                //pick a secret agent
+                let secret = Math.floor(Math.random() * Math.floor(App.Host.players.length));
+
                 // Display the players' names on screen
-                $('#player1Score')
-                    .find('.playerName')
-                    .html(App.Host.players[0].playerName);
+                for(var i = 0; i < App.Host.players.length; i++){
+                    $('#playerNames').append("<p>"+App.Host.players[i].playerName+"</p>")
+                    
+                    if(i === secret){
+                        App.Host.players[i].isSecret = true
+                        console.log("The secret is " + App.Host.players[i].playerName)
+                        IO.socket.emit('hostSecretAssigned', App.gameId, App.Host.players[i].playerName);
+                    }
+                }
+                // $('#player1Score')
+                //     .find('.playerName')
+                //     .html(App.Host.players[0].playerName);
 
-                $('#player2Score')
-                    .find('.playerName')
-                    .html(App.Host.players[1].playerName);
+                // $('#player2Score')
+                //     .find('.playerName')
+                //     .html(App.Host.players[1].playerName);
 
-                // Set the Score section on screen to 0 for each player.
-                $('#player1Score').find('.score').attr('id',App.Host.players[0].mySocketId);
-                $('#player2Score').find('.score').attr('id',App.Host.players[1].mySocketId);
+                // // Set the Score section on screen to 0 for each player.
+                // $('#player1Score').find('.score').attr('id',App.Host.players[0].mySocketId);
+                // $('#player2Score').find('.score').attr('id',App.Host.players[1].mySocketId);
             },
 
             /**
@@ -355,11 +382,11 @@ jQuery(function($){
              */
             newWord : function(data) {
                 // Insert the new word into the DOM
-                $('#hostWord').text(data.word);
+                $('#hostWord').text(data.regMsg);
                 App.doTextFit('#hostWord');
 
-                // Update the data for the current round
-                App.Host.currentCorrectAnswer = data.answer;
+                // // Update the data for the current round
+                // App.Host.currentCorrectAnswer = data.answer;
                 App.Host.currentRound = data.round;
             },
 
@@ -468,6 +495,15 @@ jQuery(function($){
              */
             myName: '',
 
+            isSecret: false,
+
+            
+            assignSecret: function () {
+                console.log(App.Player.myName + " is a secret Agent")
+                App.Player.isSecret = true;
+            },
+
+
             /**
              * Click handler for the 'JOIN' button
              */
@@ -488,7 +524,8 @@ jQuery(function($){
                 // collect data to send to the server
                 var data = {
                     gameId : +($('#inputGameId').val()),
-                    playerName : $('#inputPlayerName').val() || 'anon'
+                    playerName : $('#inputPlayerName').val() || 'anon',
+                    isSecret: false
                 };
 
                 // Send the gameId and playerName to the server
@@ -497,6 +534,7 @@ jQuery(function($){
                 // Set the appropriate properties for the current player.
                 App.myRole = 'Player';
                 App.Player.myName = data.playerName;
+                App.Player.isSecret = data.isSecret;
             },
 
             /**
@@ -563,24 +601,33 @@ jQuery(function($){
              */
             newWord : function(data) {
                 // Create an unordered list element
-                var $list = $('<ul/>').attr('id','ulAnswers');
+                // var $list = $('<ul/>').attr('id','ulAnswers');
 
-                // Insert a list item for each word in the word list
-                // received from the server.
-                $.each(data.list, function(){
-                    $list                                //  <ul> </ul>
-                        .append( $('<li/>')              //  <ul> <li> </li> </ul>
-                            .append( $('<button/>')      //  <ul> <li> <button> </button> </li> </ul>
-                                .addClass('btnAnswer')   //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
-                                .addClass('btn')         //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
-                                .val(this)               //  <ul> <li> <button class='btnAnswer' value='word'> </button> </li> </ul>
-                                .html(this)              //  <ul> <li> <button class='btnAnswer' value='word'>word</button> </li> </ul>
-                            )
-                        )
-                });
+                // // Insert a list item for each word in the word list
+                // // received from the server.
+                // $.each(data.list, function(){
+                //     $list                                //  <ul> </ul>
+                //         .append( $('<li/>')              //  <ul> <li> </li> </ul>
+                //             .append( $('<button/>')      //  <ul> <li> <button> </button> </li> </ul>
+                //                 .addClass('btnAnswer')   //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
+                //                 .addClass('btn')         //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
+                //                 .val(this)               //  <ul> <li> <button class='btnAnswer' value='word'> </button> </li> </ul>
+                //                 .html(this)              //  <ul> <li> <button class='btnAnswer' value='word'>word</button> </li> </ul>
+                //             )
+                //         )
+                // });
 
                 // Insert the list onto the screen.
-                $('#gameArea').html($list);
+                
+                if(App.Player.isSecret){
+                    $('#gameArea').text(data.secretMsg);
+                    App.doTextFit('#gameArea');
+                }else{
+                    $('#gameArea').text(data.regMsg);
+                    App.doTextFit('#gameArea');
+                }
+                // $('#gameArea').html($list);
+                console.log("Secret:" + App.Player.isSecret)
             },
 
             /**
