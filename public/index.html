@@ -7,12 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
     <!-- Let's borrow a cool looking Font from Google -->
-    <link href='https://fonts.googleapis.com/css?family=Quicksand:300,400,700' rel='stylesheet' type='text/css'>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+    </style>
 
     <link href="css/styles.css" rel="stylesheet">
 </head>
 
 <body>
+
+    <audio id="faceAudio">
+    <source src="face.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+    </audio>
+
+    <audio id="voteAudio">
+    <source src="vote.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+    </audio>
 
 
     <div id="gameArea">
@@ -34,7 +46,7 @@
                 <button id="btnJoinGame" class="btn right">JOIN</button>
                 <div style="clear:both"></div>
                 <div id="mid">
-                <input class="btn" type="button" value="LEADER BOARD" id="leaderboard">
+                <input class="btn" type="button" value="RANKS" id="leaderboard">
                 </div>
             </div>
 
@@ -81,10 +93,11 @@
     <!-- This is the 'Host' screen. It displays the word for each player to match -->
     <script id="host-game-template" type="text/template">
         <div id="wordArea">
-            <div id="hostWord">10</div>
+            <div id="hostWord">5</div>
+            <div id="roundCount">5</div>
         </div>
 
-        <div id="playerNames">
+        <div id="playerScores">
             
         </div>
     </script>

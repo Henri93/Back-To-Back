@@ -21,6 +21,7 @@ exports.initGame = function(sio, socket, sdb){
     gameSocket.on('hostRoomFull', hostPrepareGame);
     gameSocket.on('hostCountdownFinished', hostStartGame);
     gameSocket.on('hostSecretAssigned', hostSecretAssigned);
+    gameSocket.on('hostGivenPlayers', hostGivenPlayers);
     gameSocket.on('hostNextRound', hostNextRound);
 
     // Player Events
@@ -76,12 +77,16 @@ function hostSecretAssigned(gameId, secretAgent) {
     io.sockets.in(gameId).emit('secretAgent', secretAgent);
 }
 
+function hostGivenPlayers(gameId, players) {
+    io.sockets.in(gameId).emit('givenPlayers', players);
+}
+
 /**
  * A player answered correctly. Time for the next word.
  * @param data Sent from the client. Contains the current round and gameId (room)
  */
 function hostNextRound(data) {
-    if(data.round < wordPool.length ){
+    if(data.round < 3 && !data.agentLost){
         // Send a new set of words back to the host and players.
         sendWord(data.round, data.gameId);
     } else {
@@ -101,7 +106,7 @@ function hostNextRound(data) {
         data.done++;
       }
         // If the current round exceeds the number of words, send the 'gameOver' event.
-      io.sockets.in(data.gameId).emit('gameOver',data);
+      io.sockets.in(data.gameId).emit('gameOver', data);
     }
 }
 
@@ -266,4 +271,17 @@ var wordPool = [
     "Make a face like you're sucking in air",
     "Make a face like you're crying",
     "Make a face like you're falling",
+    "Make a face like you smell trash",
+    "Make a face like you ate a habanero pepper",
+    "Make a face like you just heard the professor fart while teaching",
+    "Make a face like you see a cute puppy",
+    "Make a face like you see a baby",
+    "Make a face like you just ate a warhead",
+    "Make a face like you just failed a test",
+    "Make a face like you just had 4 shots",
+    "Make a face like you just failed a test",
+    "Make a face like you got accepted into your dream college",
+    "Make a face like you haven’t slept in days",
+    "Make a face like you hear a burglar come into the house", 
+    "Make a face like you touched a hot pan",
 ]

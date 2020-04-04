@@ -1,14 +1,14 @@
 /*
 
- Main Dark : #e74c3c
- Main Mid  : #c0392b
-      Lite : #fff
-Dark Purple: #2c3e50
+Main : #121212
+Main Light : #303030
+Lite : #c72c41
+Dark Purple: #fff
 
 */
 
 html, body {
-    background-color: #e74c3c;
+    background-color: #121212;
     height: 100%;
     width: 100%;
     margin: 0;
@@ -26,13 +26,13 @@ html, body {
     height: 100%;
     width: 49%;
     margin-bottom: 0;
-    color: #e74c3c;
-    font-family: 'Quicksand', sans-serif;
+    color: #c72c41;
+    font-family: 'Montserrat', sans-serif;
     font-weight: 700;
     font-size: 2em;
     line-height: 1.2;
     text-align: center;
-    background-color: #fff;
+    background-color: #121212;
     vertical-align: middle;
     cursor: pointer;
     border: .1em solid transparent;
@@ -51,7 +51,7 @@ html, body {
 
 .btn:hover,
 .btn:focus {
-    color: #2c3e50;
+    color: #fff;
     text-decoration: none;
 }
 
@@ -81,7 +81,7 @@ html, body {
 }
 
 .titleWrapper {
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-weight: 400;
     position: absolute;
     height: 50%;
@@ -97,8 +97,8 @@ html, body {
     margin: 0px auto;
     text-align: center;
     width: 100%;
-    font-family: 'Quicksand', sans-serif;
-    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    color: #c72c41;
     font-weight: 300;
 }
 
@@ -113,20 +113,20 @@ html, body {
    ****************************** */
 
 .createGameWrapper, .joinGameWrapper, .gameOver {
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     margin: 0 auto;
     text-align: center;
 }
 
 .createGameWrapper .info{
-    color: #fff;
+    color: #c72c41;
     font-weight: 400;
     font-size: 2em;
     margin-top: 1.5em;
 }
 
 .createGameWrapper{
-    color: #2c3e50;
+    color: #fff;
     font-weight: 300;
 }
 
@@ -139,11 +139,11 @@ html, body {
     padding: 1em;
     width: 25%;
     height: 25%;
-    font-family: 'Quicksand', sans-serif;
-    color: #2c3e50;
+    font-family: 'Montserrat', sans-serif;
+    color: #fff;
     font-weight: 300;
     font-size: 1em;
-    border: .1em dotted white;
+    border: .1em dotted #c72c41;
     border-radius: 2%;
     background: transparent;
 }
@@ -167,7 +167,7 @@ html, body {
 
 .joinGameWrapper .info {
     font-size: 1.5em;
-    color: #fff;
+    color: #c72c41;
     height: 30%;
     padding-top: 1%;
 }
@@ -199,7 +199,7 @@ html, body {
 
 #ulAnswers {
     width: 100%;
-    height: 100%;
+    /*height: 100%;*/
     margin: 0;
     padding: 0;
 }
@@ -211,10 +211,10 @@ html, body {
 
 .btnAnswer {
     width: 100%;
-    border-bottom: 1px dotted white;
+    border-bottom: 1px dotted #c72c41;
     font-weight: 400;
     font-size: 3em;
-    color: #2c3e50;
+    color: #c72c41;
 }
 
 
@@ -226,7 +226,7 @@ html, body {
 
 /* Absolute Centering: http://coding.smashingmagazine.com/2013/08/09/absolute-horizontal-vertical-centering-css/ */
 #wordArea {
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-weight: 400;
     position: absolute;
     height: 50%;
@@ -239,14 +239,22 @@ html, body {
 }
 
 #hostWord {
-    height: 100%;
+    /*height: 100%;*/
     width: 100%;
+    color: #c72c41
+}
+
+#roundCount {
+    /*height: 100%;*/
+    width: 100%;
+    font-size: 5em;
+    color: #fff;
 }
 
 #hostWord h2, #btnPlayerRestart h3 {
     font-size: 3em;
     line-height: 1em;
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-weight: 400;
     margin: 0;
     padding: 0;
@@ -256,7 +264,7 @@ html, body {
 #playerScores {
     height: 10%;
     width: 100%;
-    position: fixed;
+    /*position: fixed;*/
     top: 0;
 }
 
@@ -264,9 +272,10 @@ html, body {
     width: 50%;
     padding: 0;
     margin: 0;
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-weight: 400;
     height: 100%;
+    color: #c72c41;
 }
 
 .playerScore span {
@@ -279,19 +288,20 @@ html, body {
 
 .playerScore .score {
     text-align: center;
-    background-color: #c0392b;
+    color: #121212;
+    background-color: #c72c41;
 }
 
 .playerScore .playerName {
     width: 77%;
-    background-color: #fff;
+    background-color: #303030;
 }
 
-#player1Score {
+.player1Score {
     float: left;
 }
 
-#player2Score {
+.player2Score {
     float: right;
     text-align: right;
 }
@@ -307,6 +317,7 @@ html, body {
     height: 20%;
     padding-top: 10%;
     font-size: 2em;
+    color: #c72c41
 }
 
 .btnGameOver {

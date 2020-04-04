@@ -28,6 +28,7 @@ jQuery(function($){
             IO.socket.on('playerJoinedRoom', IO.playerJoinedRoom );
             IO.socket.on('beginNewGame', IO.beginNewGame );
             IO.socket.on('secretAgent', IO.secretAgent );
+            IO.socket.on('givenPlayers', IO.givenPlayers );
             IO.socket.on('newWordData', IO.onNewWordData);
             IO.socket.on('hostCheckAnswer', IO.hostCheckAnswer);
             IO.socket.on('gameOver', IO.gameOver);
@@ -92,8 +93,14 @@ jQuery(function($){
         },
 
         secretAgent : function(name) {
-            if(App.myRole === 'Player' && App.Player.myName === name){
-                App.Player.assignSecret();
+            if(App.myRole === 'Player'){
+                App.Player.assignSecret(name);
+            }
+        },
+
+        givenPlayers : function(players) {
+            if(App.myRole === 'Player'){
+                App.Player.players = players;
             }
         },
 
@@ -114,9 +121,7 @@ jQuery(function($){
          * @param data
          */
         hostCheckAnswer : function(data) {
-            if(App.myRole === 'Host') {
-                App.Host.checkAnswer(data);
-            }
+            App[App.myRole].checkAnswer(data);
         },
 
         /**
@@ -202,12 +207,13 @@ jQuery(function($){
             // Host
             App.$doc.on('click', '#btnCreateGame', App.Host.onCreateClick);
             App.$doc.on('click', '#btnStartGame', App.Host.startGame);
+            App.$doc.on('click', '#btnHostRestart', App.Host.restartGame);
+            
 
             // Player
             App.$doc.on('click', '#btnJoinGame', App.Player.onJoinClick);
             App.$doc.on('click', '#btnStart',App.Player.onPlayerStartClick);
             App.$doc.on('click', '.btnAnswer',App.Player.onPlayerAnswerClick);
-            App.$doc.on('click', '#btnPlayerRestart', App.Player.onPlayerRestart);
             App.$doc.on('click', '#leaderboard', App.onLeaderboardClick);
             App.$doc.on('click', '#back', App.onBackClick);
         },
@@ -260,7 +266,7 @@ jQuery(function($){
             /**
              * A reference to the correct answer for the current round.
              */
-            currentCorrectAnswer: '',
+            currentAgent: '',
 
             /**
              * Handler for the "Start" button on the Title Screen.
@@ -314,6 +320,7 @@ jQuery(function($){
                     .text('Player ' + data.playerName + ' joined the game.');
 
                 // Store the new player's data on the Host.
+                data.vote = ""
                 App.Host.players.push(data);
 
                 // Increment the number of players in the room
@@ -331,7 +338,7 @@ jQuery(function($){
             startGame: function (data) {
                 // Let the server know that two players are present.
                 console.log("Host starting game")
-                IO.socket.emit('hostRoomFull',App.gameId);
+                IO.socket.emit('hostRoomFull', App.gameId);
             },
 
             /**
@@ -343,10 +350,11 @@ jQuery(function($){
                 //TODO change this ui to display all players
                 App.$gameArea.html(App.$hostGame);
                 App.doTextFit('#hostWord');
+                $('#roundCount').remove();
 
                 // Begin the on-screen countdown timer
                 var $secondsLeft = $('#hostWord');
-                App.countDown( $secondsLeft, 10, function(){
+                App.countDown($secondsLeft, 10, function(){
                     IO.socket.emit('hostCountdownFinished', App.gameId);
                 });
 
@@ -355,13 +363,23 @@ jQuery(function($){
 
                 // Display the players' names on screen
                 for(var i = 0; i < App.Host.players.length; i++){
-                    $('#playerNames').append("<p>"+App.Host.players[i].playerName+"</p>")
+
+                    //display votes
+                    if(i % 2 === 0){
+                        $('#playerScores').append("<div id='"+App.Host.players[i].playerName+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Host.players[i].playerName+"</span></div>")
+                    }else{
+                        $('#playerScores').append("<div id='"+App.Host.players[i].playerName+"' class='playerScore player2Score'><span class='playerName'>"+App.Host.players[i].playerName+"</span><span class='score'>0</span></div>")
+                    }
+                    
                     
                     if(i === secret){
                         App.Host.players[i].isSecret = true
+                        App.Host.currentAgent = App.Host.players[i].playerName
                         console.log("The secret is " + App.Host.players[i].playerName)
                         IO.socket.emit('hostSecretAssigned', App.gameId, App.Host.players[i].playerName);
                     }
+
+                    IO.socket.emit('hostGivenPlayers', App.gameId, App.Host.players);
                 }
                 // $('#player1Score')
                 //     .find('.playerName')
@@ -382,12 +400,53 @@ jQuery(function($){
              */
             newWord : function(data) {
                 // Insert the new word into the DOM
-                $('#hostWord').text(data.regMsg);
-                App.doTextFit('#hostWord');
-
-                // // Update the data for the current round
-                // App.Host.currentCorrectAnswer = data.answer;
+                // $('#hostWord').text(data.regMsg);
+                // App.doTextFit('#hostWord');
                 App.Host.currentRound = data.round;
+
+                var $secondsLeft = $('#hostWord');
+                App.countDown($secondsLeft, 70, function(){
+                    //check votes
+                    var voteCounts = {}
+                    var highestVote = 0
+                    var highestVotePerson = ""
+
+                    for(var i = 0; i < App.Host.players.length; i++){
+                        if(App.Host.players[i].vote in voteCounts){
+                            voteCounts[App.Host.players[i].vote] += 1
+                        }else{
+                            voteCounts[App.Host.players[i].vote] = 1
+                        }
+                    }
+
+                    for(const person in voteCounts){
+                        if(voteCounts[person] > highestVote){
+                            highestVote = voteCounts[person]
+                            highestVotePerson = person
+                        }
+                    }
+
+                    //if voted majority voted for secret agent end the game
+                    if(highestVote >= App.Host.players.length - 1 && highestVotePerson === App.Host.currentAgent){
+                        //end game through round limit
+                        App.currentRound += 100;
+                         var data = {
+                            gameId : App.gameId,
+                            round : App.currentRound,
+                            agentLost : true
+                        }
+                        IO.socket.emit('hostNextRound',data);
+                    }else{
+                        //otherwise continue
+                         App.currentRound += 1;
+                         var data = {
+                            gameId : App.gameId,
+                            round : App.currentRound,
+                            agentLost : false
+                        }
+                        IO.socket.emit('hostNextRound',data);
+                    }                           
+                });
             },
 
             /**
@@ -400,30 +459,15 @@ jQuery(function($){
                 // yet updated to the current round.
                 if (data.round === App.currentRound){
 
-                    // Get the player's score
-                    var $pScore = $('#' + data.playerId);
-
-                    // Advance player's score if it is correct
-                    if( App.Host.currentCorrectAnswer === data.answer ) {
-                        // Add 5 to the player's score
-                        $pScore.text( +$pScore.text() + 5 );
-
-                        // Advance the round
-                        App.currentRound += 1;
-
-                        // Prepare data to send to the server
-                        var data = {
-                            gameId : App.gameId,
-                            round : App.currentRound
-                        }
-
-                        // Notify the server to start the next round.
-                        IO.socket.emit('hostNextRound',data);
-
-                    } else {
-                        // A wrong answer was submitted, so decrement the player's score.
-                        $pScore.text( +$pScore.text() - 3 );
+                    var playerVoting = App.Host.players.find(({ playerName }) => playerName === data.playerName)
+                    if(playerVoting.vote && playerVoting.vote !== ""){
+                        var $pScore = $('#' + playerVoting.vote).find('.score');
+                        $pScore.text( +$pScore.text() - 1 );
                     }
+
+                    playerVoting.vote = data.answer;
+                    var $pScore = $('#' + data.answer).find('.score');
+                    $pScore.text( +$pScore.text() + 1 );
                 }
             },
 
@@ -433,48 +477,54 @@ jQuery(function($){
              * @param data
              */
             endGame : function(data) {
-                // Get the data for player 1 from the host screen
-                var $p1 = $('#player1Score');
-                var p1Score = +$p1.find('.score').text();
-                var p1Name = $p1.find('.playerName').text();
-
-                // Get the data for player 2 from the host screen
-                var $p2 = $('#player2Score');
-                var p2Score = +$p2.find('.score').text();
-                var p2Name = $p2.find('.playerName').text();
-
-                // Find the winner based on the scores
-                var winner = (p1Score < p2Score) ? p2Name : p1Name;
-                var tie = (p1Score === p2Score);
-
+                
                 // Display the winner (or tie game message)
-                if(tie){
-                    $('#hostWord').text("It's a Tie!");
+                if(data.agentLost){
+                    $('#hostWord').text("The Secret Agent Was Killed!");
                 } else {
-                    $('#hostWord').text( winner + ' Wins!!' );
+                    $('#hostWord').text("The Secret Agent Won!");
+                    data.winner=App.Host.currentAgent;
                 }
                 App.doTextFit('#hostWord');
-                data.winner=winner;
+                
                 if(data.done>0)
                 {
 
                 }
                 else data.done=0;
-                //console.log(data);
-                //IO.socket.emit("clientEndGame",data);
+                
                 // Reset game data
-                App.Host.numPlayersInRoom = 0;
-                App.Host.isNewGame = true;
-                IO.socket.emit('hostNextRound',data);
-                // Reset game data
+                // App.Host.numPlayersInRoom = 0;
+                // App.Host.isNewGame = true;
+                // IO.socket.emit('hostNextRound',data);
+
+                $('#wordArea').append(
+                        // Create a button to start a new game.
+                        $('<button>Play Again</button>')
+                            .attr('id','btnHostRestart')
+                            .addClass('btn')
+                            .addClass('btnGameOver')
+                    )
             },
 
             /**
-             * A player hit the 'Start Again' button after the end of a game.
+             * Host hit the 'Start Again' button after the end of a game.
              */
             restartGame : function() {
-                App.$gameArea.html(App.$templateNewGame);
-                $('#spanNewGameCode').text(App.gameId);
+                $('#btnHostRestart').remove()
+
+                console.log("restart game")
+                App.currentRound = 0
+
+                //pick new secret agent
+                let secret = Math.floor(Math.random() * Math.floor(App.Host.players.length));
+                App.Host.players[secret].isSecret = true
+                App.Host.currentAgent = App.Host.players[secret].playerName
+                console.log("The secret is " + App.Host.players[secret].playerName)
+                IO.socket.emit('hostSecretAssigned', App.gameId, App.Host.players[secret].playerName);
+
+                //restart
+                IO.socket.emit('hostCountdownFinished', App.gameId);
             }
         },
 
@@ -497,10 +547,14 @@ jQuery(function($){
 
             isSecret: false,
 
-            
-            assignSecret: function () {
-                console.log(App.Player.myName + " is a secret Agent")
-                App.Player.isSecret = true;
+            players: [],
+
+            assignSecret: function (name) {
+                if(App.Player.myName === name){
+                    App.Player.isSecret = true;
+                }else{
+                    App.Player.isSecret = false;
+                }
             },
 
 
@@ -550,6 +604,7 @@ jQuery(function($){
                 var data = {
                     gameId: App.gameId,
                     playerId: App.mySocketId,
+                    playerName: App.Player.myName,
                     answer: answer,
                     round: App.currentRound
                 }
@@ -591,8 +646,7 @@ jQuery(function($){
              */
             gameCountdown : function(hostData) {
                 App.Player.hostSocketId = hostData.mySocketId;
-                $('#gameArea')
-                    .html('<div class="gameOver">Get Ready!</div>');
+                $('#gameArea').html('<div class="gameOver">You will be given a situation and 10 seconds to make a face over video chat. When you hear the beep, come back and vote for who is the secret agent!</div>');
             },
 
             /**
@@ -600,49 +654,104 @@ jQuery(function($){
              * @param data{{round: *, word: *, answer: *, list: Array}}
              */
             newWord : function(data) {
-                // Create an unordered list element
-                // var $list = $('<ul/>').attr('id','ulAnswers');
-
-                // // Insert a list item for each word in the word list
-                // // received from the server.
-                // $.each(data.list, function(){
-                //     $list                                //  <ul> </ul>
-                //         .append( $('<li/>')              //  <ul> <li> </li> </ul>
-                //             .append( $('<button/>')      //  <ul> <li> <button> </button> </li> </ul>
-                //                 .addClass('btnAnswer')   //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
-                //                 .addClass('btn')         //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
-                //                 .val(this)               //  <ul> <li> <button class='btnAnswer' value='word'> </button> </li> </ul>
-                //                 .html(this)              //  <ul> <li> <button class='btnAnswer' value='word'>word</button> </li> </ul>
-                //             )
-                //         )
-                // });
-
-                // Insert the list onto the screen.
+                App.$gameArea.html(App.$hostGame);
                 
                 if(App.Player.isSecret){
-                    $('#gameArea').text(data.secretMsg);
-                    App.doTextFit('#gameArea');
+                    $('#wordArea').prepend("<h2 style='color: #fff;'>You are the secret agent!<h2/>")
+                    $('#hostWord').text(data.secretMsg);
+                    App.doTextFit('#hostWord');
                 }else{
-                    $('#gameArea').text(data.regMsg);
-                    App.doTextFit('#gameArea');
+                    $('#hostWord').text(data.regMsg);
+                    App.doTextFit('#hostWord');
                 }
-                // $('#gameArea').html($list);
-                console.log("Secret:" + App.Player.isSecret)
+
+                $("#faceAudio")[0].play()
+                
+                // Begin the on-screen countdown timer
+                var $secondsLeft = $('#roundCount');
+                App.doTextFit('#roundCount');
+                App.countDown($secondsLeft, 10, function(){
+                    //make noise and send to voting screen
+                    $("#voteAudio")[0].play()
+
+                    //get vote count
+                    var voteCounts = {}
+                    for(var i = 0; i < App.Player.players.length; i++){
+                        if(App.Player.players[i].vote in voteCounts){
+                            voteCounts[App.Player.players[i].vote] += 1
+                        }else{
+                            voteCounts[App.Player.players[i].vote] = 1
+                        }
+                    }
+
+                    for(var i = 0; i < App.Player.players.length; i++){
+                        //display votes
+                        var vote = 0;
+                        if(App.Player.players[i].playerName in voteCounts){
+                            vote = voteCounts[App.Player.players[i].playerName]
+                        }
+                        
+                        if(i % 2 === 0){
+                            $('#playerScores').append("<div id='"+App.Player.players[i].playerName+"' class='playerScore player1Score'><span class='score'>"+vote+"</span><span class='playerName'>"+App.Player.players[i].playerName+"</span></div>")
+                        }else{
+                            $('#playerScores').append("<div id='"+App.Player.players[i].playerName+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.players[i].playerName+"</span><span class='score'>"+vote+"</span></div>")
+                        }
+                    }
+
+                    // Create an unordered list element
+                    var $list = $('<ul/>').attr('id','ulAnswers');
+
+                    // Insert a list item for each player in the game
+                    // received from the server.
+                    $.each(App.Player.players, function(){
+                        $list                                //  <ul> </ul>
+                            .append( $('<li/>')              //  <ul> <li> </li> </ul>
+                                .append( $('<button/>')      //  <ul> <li> <button> </button> </li> </ul>
+                                    .addClass('btnAnswer')   //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
+                                    .addClass('btn')         //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
+                                    .val(this.playerName)               //  <ul> <li> <button class='btnAnswer' value='word'> </button> </li> </ul>
+                                    .html(this.playerName)              //  <ul> <li> <button class='btnAnswer' value='word'>word</button> </li> </ul>
+                                )
+                            )
+                    });
+
+                    // Insert the list onto the screen.
+                    $('#gameArea').html($('#playerScores'))
+                    $('#gameArea').append($list);
+                });
+            },
+
+            /**
+             * Check the answer clicked by a player.
+             * @param data{{round: *, playerId: *, answer: *, gameId: *}}
+             */
+            checkAnswer : function(data) {
+                // Verify that the answer clicked is from the current round.
+                // This prevents a 'late entry' from a player whos screen has not
+                // yet updated to the current round.
+                if (data.round === App.currentRound){
+
+                    var playerVoting = App.Player.players.find(({ playerName }) => playerName === data.playerName)
+                    if(playerVoting.vote && playerVoting.vote !== ""){
+                        var $pScore = $('#' + playerVoting.vote).find('.score');
+                        $pScore.text( +$pScore.text() - 1 );
+                    }
+
+                    playerVoting.vote = data.answer;
+                    var $pScore = $('#' + data.answer).find('.score');
+                    $pScore.text( +$pScore.text() + 1 );
+                }
             },
 
             /**
              * Show the "Game Over" screen.
              */
-            endGame : function() {
-                $('#gameArea')
-                    .html('<div class="gameOver">Game Over!</div>')
-                    .append(
-                        // Create a button to start a new game.
-                        $('<button>Start Again</button>')
-                            .attr('id','btnPlayerRestart')
-                            .addClass('btn')
-                            .addClass('btnGameOver')
-                    );
+            endGame : function(data) {
+                if(data.agentLost){
+                    $('#gameArea').html('<div class="gameOver">The Secret Agent Was Killed!</div>');
+                } else {
+                    $('#gameArea').html('<div class="gameOver">The Secret Agent Won!</div>');
+                }
             }
         },
 
@@ -701,7 +810,7 @@ jQuery(function($){
                     alignVert:false,
                     widthOnly:true,
                     reProcess:true,
-                    maxFontSize:300
+                    maxFontSize:250
                 }
             );
         }
