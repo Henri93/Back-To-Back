@@ -470,20 +470,20 @@ jQuery(function($){
                 // Verify that the answer clicked is from the current round.
                 // This prevents a 'late entry' from a player whos screen has not
                 // yet updated to the current round.
-                if (data.round === App.currentRound){
+                // if (data.round === App.currentRound){
 
-                    var playerVoting = App.Host.players.find(({ playerName }) => playerName === data.playerName)
+                //     var playerVoting = App.Host.players.find(({ playerName }) => playerName === data.playerName)
                     
 
-                    if(playerVoting.vote && playerVoting.vote !== ""){
-                        var $pScore = $('#' + playerVoting.vote).find('.score');
-                        $pScore.text( +$pScore.text() - 1 );
-                    }
+                //     if(playerVoting.vote && playerVoting.vote !== ""){
+                //         var $pScore = $('#' + playerVoting.vote).find('.score');
+                //         $pScore.text( +$pScore.text() - 1 );
+                //     }
 
-                    playerVoting.vote = data.answer;
-                    var $pScore = $('#' + data.answer).find('.score');
-                    $pScore.text( +$pScore.text() + 1 );
-                }
+                //     playerVoting.vote = data.answer;
+                //     var $pScore = $('#' + data.answer).find('.score');
+                //     $pScore.text( +$pScore.text() + 1 );
+                // }
             },
 
 
@@ -587,7 +587,6 @@ jQuery(function($){
             },
 
             assignQuestioner: function (name) {
-                //$('#questioner').text(name)
                 if(App.Player.myName === name){
                     // console.log("I am questioner")
                     App.Player.isQuestioner = true;
@@ -600,8 +599,49 @@ jQuery(function($){
 
                 //if back to back then prompt to answer by clicking
                 if(App.Player.isSecret){
-                    $('#instruction').text("Answer "+data.playerName+"'s question!")
-                    //then enable timer to answer and allow clicking
+                    $('#instruction').text(data.playerName+" asked a question! Click a person to vote.")
+                    //then start timer to answer and allow clicking
+                    $(".playerScore").on('click', function(){ 
+                        //pass click to other players
+                        var $btn = $(this);      
+                        var answer = $btn.attr('id'); 
+
+                        // Send the player info and tapped word to the server so
+                        // the host can check the answer.
+                        var data = {
+                            gameId: App.gameId,
+                            playerId: App.mySocketId,
+                            playerName: App.Player.myName,
+                            answer: answer,
+                            round: App.currentRound
+                        }
+
+                        IO.socket.emit('playerAnswer', data);
+                    });
+                    
+                    var $secondsLeft = $('#questionTimer');
+                    App.countDown($secondsLeft, 20, function(){
+                        //disable clicking and display results
+                        $(".playerScore").off('click');
+
+                        var voteCounts = {}
+                        //TODO fix finding the players
+                        for(var i = 0; i < App.Player.currentAgents.length; i++){
+                            if(App.Player.currentAgents[i].vote in voteCounts){
+                                voteCounts[App.Player.currentAgents[i].vote] += 1
+                            }else{
+                                voteCounts[App.Player.currentAgents[i].vote] = 1
+                            }
+                        }
+
+                        if(voteCounts[currentAgents[0]] === voteCounts[currentAgents[1]]){
+                            $('#instruction').text("Tie! Both Drink.")
+                        }else if(voteCounts[currentAgents[0]] >= voteCounts[currentAgents[1]]){
+                            $('#instruction').text(voteCounts[currentAgents[0]] + " Drink!")
+                        }else{
+                            $('#instruction').text(voteCounts[currentAgents[1]] + " Drink!")
+                        }
+                    })
 
                 }else{
                     $('#instruction').text(data.playerName + " wants to know")
@@ -788,15 +828,21 @@ jQuery(function($){
                 // yet updated to the current round.
                 if (data.round === App.currentRound){
 
-                    // var playerVoting = App.Player.players.find(({ playerName }) => playerName === data.playerName)
-                    // if(playerVoting.vote && playerVoting.vote !== ""){
-                    //     var $pScore = $('#' + playerVoting.vote).find('.score');
-                    //     $pScore.text( +$pScore.text() - 1 );
-                    // }
+                    var playerVoting = App.Player.players.find(({ playerName }) => playerName === data.playerName)
+                    
+                    if(!App.Player.isSecret){
+                        if(playerVoting.vote && playerVoting.vote !== ""){
+                            var $pScore = $('#' + playerVoting.vote).find('.score');
+                            $pScore.text( +$pScore.text() - 1 );
+                        }
+                    }
+                    
+                    playerVoting.vote = data.answer;
 
-                    // playerVoting.vote = data.answer;
-                    // var $pScore = $('#' + data.answer).find('.score');
-                    // $pScore.text( +$pScore.text() + 1 );
+                    if(!App.Player.isSecret){
+                        var $pScore = $('#' + data.answer).find('.score');
+                        $pScore.text( +$pScore.text() + 1 );
+                    }
                 }
             },
 
