@@ -11,6 +11,8 @@
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
     </style>
 
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
     <link href="css/styles.css" rel="stylesheet">
 </head>
 
@@ -85,16 +87,27 @@
         </div>
     </script>
 
-    <!-- This is the 'Host' screen. It displays the word for each player to match -->
+    <!-- This is the 'Host'/'Agent' screen. It displays the agents back-to-back and the question below -->
     <script id="host-game-template" type="text/template">
-        <div id="wordArea">
-            <div id="hostWord">5</div>
-            <div id="roundCount">5</div>
-        </div>
-
-        <div id="playerScores">
+        <div id="backToBack">
             
         </div>
+
+        <div id="questionArea">
+            <h2 id="instruction" style='color: #fff;'></h2>
+            <div id="question"></div>
+            <p id="questioner"></p>
+        </div>
+    </script>
+
+    <!-- This is the 'Questioner' screen. It displays the players back to back and a form for submitting a question -->
+    <script id="questioner-game-template" type="text/template">
+        <div class="input-group mb-3">
+            <textarea class="form-control" placeholder="Enter Question" aria-label="Enter Question" id="questionBox" rows="3"></textarea>
+            <div class="input-group-append">
+              <button class="btn" id="submitQuestion" type="button">Submit</button>
+            </div>
+          </div>
     </script>
 
 
@@ -119,6 +132,9 @@
     <!-- If Socket.IO is used with Express, then the /socket.io/ path will
         serve the proper Socket.IO javascript files used by the browser -->
     <script src="/socket.io/socket.io.js"></script>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
 
     <!-- app.js is where all the client-side Anagrammatix game logic -->
     <script src="app.js"></script>

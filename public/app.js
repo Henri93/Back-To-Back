@@ -36,6 +36,7 @@ jQuery(function($){
             IO.socket.on('gameOver', IO.gameOver);
             IO.socket.on('error', IO.error );
             IO.socket.on('showLeader',IO.showLeader);
+            IO.socket.on('newQuestion', IO.newQuestion);
         },
 
         /**
@@ -92,6 +93,10 @@ jQuery(function($){
          */
         beginNewGame : function(data) {
             App[App.myRole].gameCountdown(data);
+        },
+
+        newQuestion : function(data) {
+            App[App.myRole].newQuestion(data);
         },
 
         secretAgent : function(names) {
@@ -211,6 +216,7 @@ jQuery(function($){
             App.$templateNewGame = $('#create-game-template').html();
             App.$templateJoinGame = $('#join-game-template').html();
             App.$hostGame = $('#host-game-template').html();
+            App.$questionerGame = $('#questioner-game-template').html();
             App.$leaderGame = $('#leaderboard-template').html();
         },
 
@@ -228,6 +234,7 @@ jQuery(function($){
             App.$doc.on('click', '#btnJoinGame', App.Player.onJoinClick);
             App.$doc.on('click', '#btnStart',App.Player.onPlayerStartClick);
             App.$doc.on('click', '.btnAnswer',App.Player.onPlayerAnswerClick);
+            App.$doc.on('click', '#submitQuestion',App.Player.onPlayerSubmitQuestion);
             App.$doc.on('click', '#leaderboard', App.onLeaderboardClick);
             App.$doc.on('click', '#back', App.onBackClick);
         },
@@ -357,11 +364,10 @@ jQuery(function($){
             gameCountdown : function() {
                 
                 App.$gameArea.html(App.$hostGame);
-                App.doTextFit($('#hostWord'));
-                $('#roundCount').remove();
+                App.doTextFit($('#question'));
 
                 // Begin the on-screen countdown timer
-                var $secondsLeft = $('#hostWord');
+                var $secondsLeft = $('#question');
                 App.countDown($secondsLeft, 1, function(){
                     IO.socket.emit('hostCountdownFinished', App.gameId);
                 });
@@ -385,8 +391,8 @@ jQuery(function($){
                 }
 
                 // Display the players' names on screen
-                $('#playerScores').append("<div id='"+App.Host.players[first].playerName+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Host.players[first].playerName+"</span></div>")
-                $('#playerScores').append("<div id='"+App.Host.players[second].playerName+"' class='playerScore player2Score'><span class='playerName'>"+App.Host.players[second].playerName+"</span><span class='score'>0</span></div>")
+                $('#backToBack').append("<div id='"+App.Host.players[first].playerName+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Host.players[first].playerName+"</span></div>")
+                $('#backToBack').append("<div id='"+App.Host.players[second].playerName+"' class='playerScore player2Score'><span class='playerName'>"+App.Host.players[second].playerName+"</span><span class='score'>0</span></div>")
                 
                 App.Host.currentAgents = [App.Host.players[first].playerName, App.Host.players[second].playerName]
                 for (var i = 0; i < App.Host.players.length; i++){
@@ -529,6 +535,10 @@ jQuery(function($){
 
                 //restart
                 IO.socket.emit('hostCountdownFinished', App.gameId);
+            },
+
+            newQuestion : function(data) {
+                $('#question').text(data.question)
             }
         },
 
@@ -562,12 +572,12 @@ jQuery(function($){
                 App.Player.currentAgents = agents
 
                 //display back-to-back
-                $('#playerScores').append("<div id='"+App.Player.currentAgents[0]+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Player.currentAgents[0]+"</span></div>")
-                $('#playerScores').append("<div id='"+App.Player.currentAgents[1]+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.currentAgents[1]+"</span><span class='score'>0</span></div>")
+                $('#backToBack').append("<div id='"+App.Player.currentAgents[0]+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Player.currentAgents[0]+"</span></div>")
+                $('#backToBack').append("<div id='"+App.Player.currentAgents[1]+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.currentAgents[1]+"</span><span class='score'>0</span></div>")
 
                 if(agents.indexOf(App.Player.myName) >= 0){
                     App.Player.isSecret = true;
-                    $('#wordArea').prepend("<h2 style='color: #fff;'>You are back to back!<h2/>")
+                    $('#instruction').text("You are back to back, Wait for a question!")
                 }
             },
 
@@ -577,11 +587,45 @@ jQuery(function($){
             },
 
             assignQuestioner: function (name) {
+                //$('#questioner').text(name)
                 if(App.Player.myName === name){
                     // console.log("I am questioner")
                     App.Player.isQuestioner = true;
-                    $('#wordArea').prepend("<h2 style='color: #fff;'>Ask a question!<h2/>")
+                    $('#questionArea').append(App.$questionerGame);
                 }
+            },
+
+            newQuestion : function(data) {
+                $('#question').text(data.question)
+
+                //if back to back then prompt to answer by clicking
+                if(App.Player.isSecret){
+                    $('#instruction').text("Answer "+data.playerName+"'s question!")
+                    //then enable timer to answer and allow clicking
+
+                }else{
+                    $('#instruction').text(data.playerName + " wants to know")
+                }
+            },
+
+            /**
+             *  Click handler for the Player submitting a question.
+             */
+            onPlayerSubmitQuestion: function() {
+   
+                var question = $(questionBox).val();
+                $('#question').text(question);
+                $('#questionArea').children().last().remove();
+
+                var data = {
+                    gameId: App.gameId,
+                    playerId: App.mySocketId,
+                    playerName: App.Player.myName,
+                    question: question,
+                    round: App.currentRound
+                }
+
+                IO.socket.emit('playerSubmitQuestion', data);
             },
 
             /**
@@ -668,7 +712,8 @@ jQuery(function($){
              */
             gameCountdown : function(hostData) {
                 App.Player.hostSocketId = hostData.mySocketId;
-                $('#gameArea').html('<div class="gameOver">2 people will be selected to go back-to-back, If you are back-to-back then you will click the person that best answers the question. If you are not back-to-back you will be able to ask questions.</div>');
+                App.$gameArea.html(App.$hostGame);
+                $('#question').text("2 people will be selected to go back-to-back, If you are back-to-back then you will click the person that best answers the question. If you are not back-to-back you will be able to ask questions.");
             },
 
             /**
@@ -676,73 +721,61 @@ jQuery(function($){
              * @param data{{round: *, word: *, answer: *, list: Array}}
              */
             newWord : function(data) {
-                App.$gameArea.html(App.$hostGame);
-                
-                if(App.Player.isSecret){
-                    $('#wordArea').prepend("<h2 style='color: #fff;'>You are back to back!<h2/>")
-                    $('#hostWord').text(data.secretMsg);
-                    App.doTextFit($('#hostWord'));
-                }else if(App.Player.isQuestioner){
-                    $('#wordArea').prepend("<h2 style='color: #fff;'>Ask a question!<h2/>")
-                }else{
-                    $('#hostWord').text(data.regMsg);
-                    App.doTextFit($('#hostWord'));
-                }
-                
-                // Begin the on-screen countdown timer
-                var $secondsLeft = $('#roundCount');
-                App.doTextFit($('#roundCount'));
-                App.countDown($secondsLeft, 30, function(){
-                    //make noise and send to voting screen
+               
+                // // Begin the on-screen countdown timer
+                // var $secondsLeft = $('#roundCount');
+                // App.doTextFit($('#roundCount'));
+                // App.countDown($secondsLeft, 30, function(){
+                //     //make noise and send to voting screen
 
-                    //get vote count
-                    var voteCounts = {}
-                    for(var i = 0; i < App.Player.players.length; i++){
-                        if(App.Player.players[i].vote in voteCounts){
-                            voteCounts[App.Player.players[i].vote] += 1
-                        }else{
-                            voteCounts[App.Player.players[i].vote] = 1
-                        }
-                    }
+                //     //get vote count
+                //     var voteCounts = {}
+                //     for(var i = 0; i < App.Player.players.length; i++){
+                //         if(App.Player.players[i].vote in voteCounts){
+                //             voteCounts[App.Player.players[i].vote] += 1
+                //         }else{
+                //             voteCounts[App.Player.players[i].vote] = 1
+                //         }
+                //     }
 
-                    for(var i = 0; i < App.Player.currentAgents.length; i++){
-                        //display votes
-                        var vote = 0;
-                        if(App.Player.currentAgents[i] in voteCounts){
-                            vote = voteCounts[App.Player.currentAgents[i]]
-                        }
+                //     for(var i = 0; i < App.Player.currentAgents.length; i++){
+                //         //display votes
+                //         var vote = 0;
+                //         if(App.Player.currentAgents[i] in voteCounts){
+                //             vote = voteCounts[App.Player.currentAgents[i]]
+                //         }
                         
-                        if(i % 2 === 0){
-                            $('#playerScores').append("<div id='"+App.Player.currentAgents[i]+"' class='playerScore player1Score'><span class='score'>"+vote+"</span><span class='playerName'>"+App.Player.currentAgents[i]+"</span></div>")
-                        }else{
-                            $('#playerScores').append("<div id='"+App.Player.currentAgents[i]+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.currentAgents[i]+"</span><span class='score'>"+vote+"</span></div>")
-                        }
-                    }
+                //         if(i % 2 === 0){
+                //             $('#playerScores').append("<div id='"+App.Player.currentAgents[i]+"' class='playerScore player1Score'><span class='score'>"+vote+"</span><span class='playerName'>"+App.Player.currentAgents[i]+"</span></div>")
+                //         }else{
+                //             $('#playerScores').append("<div id='"+App.Player.currentAgents[i]+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.currentAgents[i]+"</span><span class='score'>"+vote+"</span></div>")
+                //         }
+                //     }
 
-                    // // Create an unordered list element
-                    // var $list = $('<ul/>').attr('id','ulAnswers');
+                //     // // Create an unordered list element
+                //     // var $list = $('<ul/>').attr('id','ulAnswers');
 
-                    // // Insert a list item for each player in the game
-                    // // received from the server.
-                    // $.each(App.Player.players, function(){
-                    //     $list                                //  <ul> </ul>
-                    //         .append( $('<li/>')              //  <ul> <li> </li> </ul>
-                    //             .append( $('<button/>')      //  <ul> <li> <button> </button> </li> </ul>
-                    //                 .addClass('btnAnswer')   //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
-                    //                 .addClass('btn')         //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
-                    //                 .val(this.playerName)               //  <ul> <li> <button class='btnAnswer' value='word'> </button> </li> </ul>
-                    //                 .html(this.playerName)              //  <ul> <li> <button class='btnAnswer' value='word'>word</button> </li> </ul>
-                    //             )
-                    //         )
-                    // });
+                //     // // Insert a list item for each player in the game
+                //     // // received from the server.
+                //     // $.each(App.Player.players, function(){
+                //     //     $list                                //  <ul> </ul>
+                //     //         .append( $('<li/>')              //  <ul> <li> </li> </ul>
+                //     //             .append( $('<button/>')      //  <ul> <li> <button> </button> </li> </ul>
+                //     //                 .addClass('btnAnswer')   //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
+                //     //                 .addClass('btn')         //  <ul> <li> <button class='btnAnswer'> </button> </li> </ul>
+                //     //                 .val(this.playerName)               //  <ul> <li> <button class='btnAnswer' value='word'> </button> </li> </ul>
+                //     //                 .html(this.playerName)              //  <ul> <li> <button class='btnAnswer' value='word'>word</button> </li> </ul>
+                //     //             )
+                //     //         )
+                //     // });
 
-                    // // Insert the list onto the screen.
-                    // $('#gameArea').html($('#playerScores'))
-                    // $('#gameArea').append($secondsLeft)
-                    // $('#gameArea').append($list);
+                //     // // Insert the list onto the screen.
+                //     // $('#gameArea').html($('#playerScores'))
+                //     // $('#gameArea').append($secondsLeft)
+                //     // $('#gameArea').append($list);
                     
                     
-                });
+                // });
             },
 
             /**
