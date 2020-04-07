@@ -21,10 +21,12 @@ exports.initGame = function(sio, socket, sdb){
     gameSocket.on('hostRoomFull', hostPrepareGame);
     gameSocket.on('hostCountdownFinished', hostStartGame);
     gameSocket.on('hostSecretAssigned', hostSecretAssigned);
+    gameSocket.on('hostQuestionersAssigned', hostQuestionersAssigned);
     gameSocket.on('hostGivenPlayers', hostGivenPlayers);
     gameSocket.on('hostNextRound', hostNextRound);
 
     // Player Events
+    gameSocket.on('questionerPicked', playerQuestionerPicked);
     gameSocket.on('playerJoinGame', playerJoinGame);
     gameSocket.on('playerAnswer', playerAnswer);
     gameSocket.on('playerRestart', playerRestart);
@@ -73,8 +75,12 @@ function hostStartGame(gameId) {
     sendWord(0,gameId);
 };
 
-function hostSecretAssigned(gameId, secretAgent) {
-    io.sockets.in(gameId).emit('secretAgent', secretAgent);
+function hostSecretAssigned(gameId, secretAgents) {
+    io.sockets.in(gameId).emit('secretAgent', secretAgents);
+}
+
+function hostQuestionersAssigned(gameId, questioners) {
+    io.sockets.in(gameId).emit('questioners', questioners);
 }
 
 function hostGivenPlayers(gameId, players) {
@@ -141,6 +147,10 @@ function findLeader()
    *     PLAYER FUNCTIONS      *
    *                           *
    ***************************** */
+function playerQuestionerPicked(gameId, questioner) {
+    io.sockets.in(gameId).emit('questionerPicked', questioner);
+}
+
 
 /**
  * A player clicked the 'START GAME' button.
