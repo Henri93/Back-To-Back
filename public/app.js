@@ -388,40 +388,6 @@ jQuery(function($){
 
                 IO.socket.emit('hostGivenPlayers', App.gameId, App.Host.players);
 
-                var $detailsContainer = $('#match-details-container');
-                var $detailsCurtain = $('#match-details-curtain');
-
-                var fillDetailedMatchStatistics = function(homeCommingName, homeCommingLogo, homeCommingScore, awayName, awayLogo, awayScore, date, time) {
-                    $('.homecomming-team.logo').css('background-image', 'url("' + homeCommingLogo + '")');
-
-                    $('.homecomming-team.name').text(homeCommingName);
-
-                    $('.homecomming-team.score').text(homeCommingScore);
-
-                    $('.away-team.logo').css('background-image', 'url("' + awayLogo + '")');
-
-                    $('.away-team.name').text(awayName);
-
-                    $('.away-team.score').text(awayScore);
-                    
-                    var $awayTeamScoreEl = $('.away-team.score');
-                    var $homeCommingTeamScoreEl = $('.homecomming-team.score');
-                    var $awayTeamScore = +$awayTeamScoreEl.text();
-                    var $homeCommingTeamScore = +$homeCommingTeamScoreEl.text();
-                    
-                    if($awayTeamScore == $homeCommingTeamScore) {
-                        $($awayTeamScoreEl, $homeCommingTeamScoreEl).addClass('winner');
-                    } else if($awayTeamScore > $homeCommingTeamScore) {
-                        $awayTeamScoreEl.addClass('winner');
-                        $homeCommingTeamScoreEl.removeClass('winner');
-                    } else {
-                        $awayTeamScoreEl.removeClass('winner');
-                        $homeCommingTeamScoreEl.addClass('winner');
-                    }
-                };
-
-                fillDetailedMatchStatistics('Anderlecht', 'https://bit.ly/2gKJrFY', 1, 'AA Gent', 'https://www.kaagent.be/images/community/kaagent_foundation_transp.png', 3, '30 September 2016', '20:35');
-
             },
 
             /**
@@ -439,6 +405,7 @@ jQuery(function($){
                 }
 
                 // Display the players' names on screen
+                App.fillDetailedMatchStatistics(App.Host.players[first].playerName, 'https://bit.ly/2gKJrFY', 0, App.Host.players[second].playerName, 'https://www.kaagent.be/images/community/kaagent_foundation_transp.png', 0, '30 September 2016', '20:35');
                 // $('#backToBack').html("<div id='"+App.Host.players[first].playerName+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Host.players[first].playerName+"</span></div>")
                 // $('#backToBack').append("<div id='"+App.Host.players[second].playerName+"' class='playerScore player2Score'><span class='playerName'>"+App.Host.players[second].playerName+"</span><span class='score'>0</span></div>")
                 
@@ -679,6 +646,7 @@ jQuery(function($){
                 App.Player.currentAgents = agents
 
                 //display back-to-back
+                App.fillDetailedMatchStatistics(App.Player.currentAgents[0], 'https://bit.ly/2gKJrFY', 0, App.Player.currentAgents[1], 'https://www.kaagent.be/images/community/kaagent_foundation_transp.png', 0, '30 September 2016', '20:35');
                 // $('#backToBack').html("<div id='"+App.Player.currentAgents[0]+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Player.currentAgents[0]+"</span></div>")
                 // $('#backToBack').append("<div id='"+App.Player.currentAgents[1]+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.currentAgents[1]+"</span><span class='score'>0</span></div>")
 
@@ -1038,7 +1006,36 @@ jQuery(function($){
                     maxFontSize:250
                 }
             );
-        }
+        },
+
+        fillDetailedMatchStatistics : function(homeCommingName, homeCommingLogo, homeCommingScore, awayName, awayLogo, awayScore, date, time) {
+                    $('.homecomming-team.logo').css('background-image', 'url("' + homeCommingLogo + '")');
+
+                    $('.homecomming-team.name').text(homeCommingName);
+
+                    $('.homecomming-team.score').text(homeCommingScore);
+
+                    $('.away-team.logo').css('background-image', 'url("' + awayLogo + '")');
+
+                    $('.away-team.name').text(awayName);
+
+                    $('.away-team.score').text(awayScore);
+                    
+                    var $awayTeamScoreEl = $('.away-team.score');
+                    var $homeCommingTeamScoreEl = $('.homecomming-team.score');
+                    var $awayTeamScore = +$awayTeamScoreEl.text();
+                    var $homeCommingTeamScore = +$homeCommingTeamScoreEl.text();
+                    
+                    if($awayTeamScore == $homeCommingTeamScore) {
+                        $($awayTeamScoreEl, $homeCommingTeamScoreEl).addClass('winner');
+                    } else if($awayTeamScore > $homeCommingTeamScore) {
+                        $awayTeamScoreEl.addClass('winner');
+                        $homeCommingTeamScoreEl.removeClass('winner');
+                    } else {
+                        $awayTeamScoreEl.removeClass('winner');
+                        $homeCommingTeamScoreEl.addClass('winner');
+                    }
+            }
 
     };
 
