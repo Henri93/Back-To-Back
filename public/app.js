@@ -31,6 +31,8 @@ jQuery(function($){
             IO.socket.on('questioners', IO.questioners );
             IO.socket.on('questionerPicked', IO.questionerPicked );
             IO.socket.on('givenPlayers', IO.givenPlayers );
+            IO.socket.on('voteResults', IO.hostVoteResults);
+            IO.socket.on('voteOutcome', IO.voteOutcome);
             IO.socket.on('newWordData', IO.onNewWordData);
             IO.socket.on('hostCheckAnswer', IO.hostCheckAnswer);
             IO.socket.on('gameOver', IO.gameOver);
@@ -120,6 +122,18 @@ jQuery(function($){
         givenPlayers : function(players) {
             if(App.myRole === 'Player'){
                 App.Player.players = players;
+            }
+        },
+
+        hostVoteResults : function(questioner) {
+            if(App.myRole === 'Host'){
+                App.Host.voteResults(questioner);
+            }
+        },
+
+        voteOutcome : function(data) {
+            if(App.myRole === 'Player'){
+                App.Player.voteOutcome(data);
             }
         },
 
@@ -391,7 +405,7 @@ jQuery(function($){
                 }
 
                 // Display the players' names on screen
-                $('#backToBack').append("<div id='"+App.Host.players[first].playerName+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Host.players[first].playerName+"</span></div>")
+                $('#backToBack').html("<div id='"+App.Host.players[first].playerName+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Host.players[first].playerName+"</span></div>")
                 $('#backToBack').append("<div id='"+App.Host.players[second].playerName+"' class='playerScore player2Score'><span class='playerName'>"+App.Host.players[second].playerName+"</span><span class='score'>0</span></div>")
                 
                 App.Host.currentAgents = [App.Host.players[first].playerName, App.Host.players[second].playerName]
@@ -470,20 +484,77 @@ jQuery(function($){
                 // Verify that the answer clicked is from the current round.
                 // This prevents a 'late entry' from a player whos screen has not
                 // yet updated to the current round.
-                // if (data.round === App.currentRound){
+                if (data.round === App.currentRound){
 
-                //     var playerVoting = App.Host.players.find(({ playerName }) => playerName === data.playerName)
+                    var playerVoting = App.Host.players.find(({ playerName }) => playerName === data.playerName)
+
+                    if(playerVoting.vote && playerVoting.vote !== ""){
+                        var $pScore = $('#' + playerVoting.vote).find('.score');
+                        $pScore.text( +$pScore.text() - 1 );
+                    }
+
+                    playerVoting.vote = data.answer;
+                    var $pScore = $('#' + data.answer).find('.score');
+                    $pScore.text( +$pScore.text() + 1 );
+                }
+            },
+
+            voteResults : function(questioner) {
+                var voteCounts = {}
+                for(var i = 0; i < App.Host.currentAgents.length; i++){
+                    var playerVoting = App.Host.players.find(({ playerName }) => playerName === App.Host.currentAgents[i])
                     
+                    if(playerVoting.vote in voteCounts){
+                        voteCounts[playerVoting.vote] += 1
+                    }else{
+                        voteCounts[playerVoting.vote] = 1
+                    }
+                }
 
-                //     if(playerVoting.vote && playerVoting.vote !== ""){
-                //         var $pScore = $('#' + playerVoting.vote).find('.score');
-                //         $pScore.text( +$pScore.text() - 1 );
-                //     }
+                //emit this to all players
+                let vote0 = App.Host.currentAgents[0] in voteCounts ? voteCounts[App.Host.currentAgents[0]] : 0
+                let vote1 = App.Host.currentAgents[1] in voteCounts ? voteCounts[App.Host.currentAgents[1]] : 0
+                var outcome = ""
 
-                //     playerVoting.vote = data.answer;
-                //     var $pScore = $('#' + data.answer).find('.score');
-                //     $pScore.text( +$pScore.text() + 1 );
-                // }
+                if(vote0 === vote1){
+                    outcome = "Tie! Both Drink."
+                }else if(vote0 > vote1){
+                    outcome = (App.Host.currentAgents[0] + " Drink!")
+                }else{
+                    outcome = (App.Host.currentAgents[1] + " Drink!")
+                }
+
+                var data = {
+                            gameId: App.gameId,
+                            outcome: outcome,
+                            round: App.currentRound
+                        }
+
+                IO.socket.emit('voteOutcome', data);
+
+                var $secondsLeft = $('#questionTimer');
+                App.countDown($secondsLeft, 10, function(){
+                    //clear votes
+                    for(var i = 0; i < App.Host.players.length; i++){
+                        App.Host.players[i].vote = ""
+                    }
+                    $("#"+App.Host.currentAgents[0]).find('.score').text("0")
+                    $("#"+App.Host.currentAgents[1]).find('.score').text("0")
+
+                    //get a new questioner if any left
+                    console.log("questioner done " + questioner)
+                    App.Host.currentQuestioners = App.Host.currentQuestioners.filter(e => e !== questioner);
+                    console.log("remaining: " + App.Host.currentQuestioners)
+
+                    if(App.Host.currentQuestioners.length > 0){
+                        IO.socket.emit('hostQuestionersAssigned', App.gameId, App.Host.currentQuestioners);
+                        IO.socket.emit('questionerPicked', App.gameId, App.Host.currentQuestioners[Math.floor(Math.random() * Math.floor(App.Host.currentQuestioners.length))]);
+                    }else{
+                        //start new round
+                        console.log("start new round!")
+                        IO.socket.emit('hostCountdownFinished', App.gameId);
+                    }
+                })
             },
 
 
@@ -565,6 +636,8 @@ jQuery(function($){
 
             currentAgents: [],
 
+            currentQuestioner: "",
+
             currentQuestioners: [],
 
             assignSecret: function (agents) {
@@ -572,12 +645,14 @@ jQuery(function($){
                 App.Player.currentAgents = agents
 
                 //display back-to-back
-                $('#backToBack').append("<div id='"+App.Player.currentAgents[0]+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Player.currentAgents[0]+"</span></div>")
+                $('#backToBack').html("<div id='"+App.Player.currentAgents[0]+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Player.currentAgents[0]+"</span></div>")
                 $('#backToBack').append("<div id='"+App.Player.currentAgents[1]+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.currentAgents[1]+"</span><span class='score'>0</span></div>")
 
                 if(agents.indexOf(App.Player.myName) >= 0){
                     App.Player.isSecret = true;
                     $('#instruction').text("You are back to back, Wait for a question!")
+                }else{
+                    App.Player.isSecret = false;
                 }
             },
 
@@ -587,11 +662,35 @@ jQuery(function($){
             },
 
             assignQuestioner: function (name) {
+                App.Player.currentQuestioner = name
+
                 if(App.Player.myName === name){
                     // console.log("I am questioner")
                     App.Player.isQuestioner = true;
-                    $('#questionArea').append(App.$questionerGame);
+                    $('#instruction').text("Ask a question.")
+                    if ($('#questionArea').find('#questionForm').length <= 0) {
+                        $('#questionArea').append(App.$questionerGame);
+                    }
+                }else{
+                    App.Player.isQuestioner = false;
                 }
+
+                if(!App.Player.isSecret && !App.Player.isQuestioner){
+                    $('#instruction').text(name + " is thinking...")
+                }
+            },
+
+            voteOutcome: function (data) {
+                $('#questionTimer').text("");
+                $('#instruction').text(data.outcome);
+                $("#winAudio")[0].play()
+
+                //clear votes
+                for(var i = 0; i < App.Player.players.length; i++){
+                        App.Player.players[i].vote = ""
+                }
+                $("#"+App.Player.currentAgents[0]).find('.score').text("0")
+                $("#"+App.Player.currentAgents[1]).find('.score').text("0")
             },
 
             newQuestion : function(data) {
@@ -620,27 +719,14 @@ jQuery(function($){
                     });
                     
                     var $secondsLeft = $('#questionTimer');
-                    App.countDown($secondsLeft, 20, function(){
+                    App.countDown($secondsLeft, 10, function(){
                         //disable clicking and display results
                         $(".playerScore").off('click');
 
-                        var voteCounts = {}
-                        //TODO fix finding the players
-                        for(var i = 0; i < App.Player.currentAgents.length; i++){
-                            if(App.Player.currentAgents[i].vote in voteCounts){
-                                voteCounts[App.Player.currentAgents[i].vote] += 1
-                            }else{
-                                voteCounts[App.Player.currentAgents[i].vote] = 1
-                            }
+                        if(App.Player.myName === App.Player.currentAgents[0]){
+                            IO.socket.emit('hostVoteResults', App.gameId, App.Player.currentQuestioner);
                         }
-
-                        if(voteCounts[currentAgents[0]] === voteCounts[currentAgents[1]]){
-                            $('#instruction').text("Tie! Both Drink.")
-                        }else if(voteCounts[currentAgents[0]] >= voteCounts[currentAgents[1]]){
-                            $('#instruction').text(voteCounts[currentAgents[0]] + " Drink!")
-                        }else{
-                            $('#instruction').text(voteCounts[currentAgents[1]] + " Drink!")
-                        }
+                        
                     })
 
                 }else{

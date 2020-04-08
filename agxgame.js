@@ -23,10 +23,12 @@ exports.initGame = function(sio, socket, sdb){
     gameSocket.on('hostSecretAssigned', hostSecretAssigned);
     gameSocket.on('hostQuestionersAssigned', hostQuestionersAssigned);
     gameSocket.on('hostGivenPlayers', hostGivenPlayers);
+    gameSocket.on('hostVoteResults', hostVoteResults);
     gameSocket.on('hostNextRound', hostNextRound);
 
     // Player Events
     gameSocket.on('questionerPicked', playerQuestionerPicked);
+    gameSocket.on('voteOutcome', playerVoteOutcome);
     gameSocket.on('playerJoinGame', playerJoinGame);
     gameSocket.on('playerAnswer', playerAnswer);
     gameSocket.on('playerRestart', playerRestart);
@@ -86,6 +88,10 @@ function hostQuestionersAssigned(gameId, questioners) {
 
 function hostGivenPlayers(gameId, players) {
     io.sockets.in(gameId).emit('givenPlayers', players);
+}
+
+function hostVoteResults(gameId, questioner) {
+    io.sockets.in(gameId).emit('voteResults', questioner);
 }
 
 /**
@@ -216,6 +222,10 @@ function playerAnswer(data) {
  */
 function playerSubmitQuestion(data) {
     io.sockets.in(data.gameId).emit('newQuestion', data);
+}
+
+function playerVoteOutcome(data) {
+    io.sockets.in(data.gameId).emit('voteOutcome', data);
 }
 
 /**
