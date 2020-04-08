@@ -6,6 +6,8 @@ Lite : #c3073f
 Dark Purple: #950740
 
 */
+@import url('https://fonts.googleapis.com/css?family=Raleway:200');
+@import url('https://fonts.googleapis.com/css?family=Roboto');
 
 html, body {
     background-color: #1a1a1d;
@@ -98,8 +100,19 @@ html, body {
     text-align: center;
     width: 100%;
     font-family: 'Montserrat', sans-serif;
+    font-size: 7em;
     color: #c3073f;
     font-weight: 300;
+}
+
+.subtitle {
+    margin: 0px auto;
+    text-align: center;
+    width: 100%;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 200;
+    font-size: 2em;
+    color: #950740;
 }
 
 .buttons {
@@ -228,7 +241,6 @@ html, body {
 #questionArea {
     font-family: 'Montserrat', sans-serif;
     font-weight: 400;
-    position: absolute;
     height: 50%;
     width: 50%;
     margin: auto;
@@ -363,4 +375,130 @@ tr:nth-child(even) {
 tr:nth-child(odd) {
   background: #336600 ;
   color:white;
+}
+
+
+/*BACK-TO-BACK*/
+/* Match details container */
+#match-details-container {
+    display: block;
+    justify-content: center;
+    align-items: center;
+    z-index: 500;
+    color: #F3EFF5;
+    background-color: #454955;
+    width: 100%;
+    -webkit-box-shadow: 0px 0px 17px 3px rgba(0,0,0,0.75);
+    -moz-box-shadow: 0px 0px 17px 3px rgba(0,0,0,0.75);
+    box-shadow: 0px 0px 17px 3px rgba(0,0,0,0.75);
+    opacity: 1;
+}
+
+#title {
+    display: block;
+    position: relative;
+    width: 100%;
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 0.5em;
+}
+
+#title::after {
+    content: '';
+    display: block;
+    width: 45%;
+    border-bottom: 2px solid #99C24D;
+    margin: 0 auto;
+    margin-top: 0.2em;
+}
+
+#title::before {
+    margin-bottom: 0.2em;
+    width: 60%;
+}
+
+#teams-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.flexbox-items {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 33.33333%;
+}
+
+.logo {
+    display: block;
+    width: 70px;
+    height: 70px;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.name {
+    font-size: 1.2em;
+}
+
+#vs {
+    width: 100%;
+    position: relative;
+    margin-top: 2em;
+    margin-left: 5px;
+}
+
+#vs-line {
+    width: 80%;
+    float: left;
+    margin-top: 6px;
+    border: 0;
+    border-bottom: 2px dashed #ccc;
+}
+
+.circle {
+    display: block;
+    float: left;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #F3EFF5;
+    transform:rotate(360deg); /* for smoother circle */
+    -ms-transform:rotate(360deg);
+    -moz-transform:rotate(360deg);
+    -webkit-transform:rotate(360deg);
+    -o-transform:rotate(360deg);
+}
+
+#score-container {
+    display: block;
+    width: 30%;
+    height: 60px;
+    margin: 0 auto;
+}
+
+.score {
+    position: relative;
+    width: calc(50% - 3px);
+    height: 60px;
+    float: left;
+    text-align: center;
+    line-height: 60px;
+    border: 2px solid #F3EFF5;
+    border-right: 1px solid #F3EFF5;
+    background-color: #454955;
+    font-size: 2em;
+    font-family: 'Roboto', sans-serif;
+}
+
+.away-team.score {
+    float: right;
+    border-right: 2px solid #F3EFF5;
+    border-left: 1px solid #F3EFF5;
+}
+
+.winner {
+    color: #02111B;
+    background-color: #99C24D;
 }

@@ -33,9 +33,15 @@
 
         <div class="titleWrapper">
 
+            <div class="subtitle">
+                The Back-To-Back online drinking game
+            </div>
+
             <div class="title">
                 B2B
             </div>
+
+            
 
             <div class="buttons">
 
@@ -89,8 +95,32 @@
 
     <!-- This is the 'Host'/'Agent' screen. It displays the agents back-to-back and the question below -->
     <script id="host-game-template" type="text/template">
-        <div id="backToBack">
-            
+        
+        <div id="match-details-container">
+            <div id="title">MATCH STATISTICS</div>
+            <div id="teams-container">
+                <div class="homecomming-team flexbox-items">
+                    <div class="homecomming-team logo"></div>
+                    <br />
+                    <div class="homecomming-team name"></div>
+                </div>
+                <div class="flexbox-items">
+                    <div id="vs">
+                        <div class="circle"></div>
+                        <hr id="vs-line" />
+                        <div class="circle"></div>
+                    </div>
+                </div>
+                <div class="away-team flexbox-items">
+                    <div class="away-team logo"></div>
+                    <br />
+                    <div class="away-team name"></div>
+                </div>
+            </div>
+            <div id="score-container">
+                <div class="homecomming-team score"></div>
+                <div class="away-team score"></div>
+            </div>
         </div>
 
         <div id="questionArea">
