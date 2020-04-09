@@ -1,6 +1,7 @@
 var io;
 var gameSocket;
 var db;
+var giphy = require('giphy-api')('8mZNN8Sw35SgpdXYdYwpjmvN3tIwIrUX');
 /**
  * This function is called by index.js to initialize a new game instance.
  *
@@ -181,6 +182,12 @@ function playerJoinGame(data) {
 
         // Join the room
         sock.join(data.gameId);
+        giphy.random(data.playerName).then(function (res) {
+            data.profileImage = res["data"]["images"]["downsized_large"]["url"]
+            // Emit an event notifying the clients that the player has joined the room.
+            io.sockets.in(data.gameId).emit('playerJoinedRoom', data);
+        });
+
         db.serialize(function()
             {
                 var stmt = " SELECT * FROM player WHERE player_name='"+data.playerName+"';";
@@ -194,9 +201,6 @@ function playerJoinGame(data) {
                 });
             });
         //console.log('Player ' + data.playerName + ' joining game: ' + data.gameId );
-
-        // Emit an event notifying the clients that the player has joined the room.
-        io.sockets.in(data.gameId).emit('playerJoinedRoom', data);
 
     } else {
         // Otherwise, send an error message back to the player.

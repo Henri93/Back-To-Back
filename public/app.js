@@ -405,7 +405,7 @@ jQuery(function($){
                 }
 
                 // Display the players' names on screen
-                App.fillDetailedMatchStatistics(App.Host.players[first].playerName, 'https://bit.ly/2gKJrFY', 0, App.Host.players[second].playerName, 'https://www.kaagent.be/images/community/kaagent_foundation_transp.png', 0, '30 September 2016', '20:35');
+                App.fillDetailedMatchStatistics(App.Host.players[first].playerName, App.Host.players[first].profileImage, 0, App.Host.players[second].playerName, App.Host.players[second].profileImage, 0, '30 September 2016', '20:35');
                 // $('#backToBack').html("<div id='"+App.Host.players[first].playerName+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Host.players[first].playerName+"</span></div>")
                 // $('#backToBack').append("<div id='"+App.Host.players[second].playerName+"' class='playerScore player2Score'><span class='playerName'>"+App.Host.players[second].playerName+"</span><span class='score'>0</span></div>")
                 
@@ -631,6 +631,8 @@ jQuery(function($){
              */
             myName: '',
 
+            profileImage: '',
+
             isSecret: false,
 
             isQuestioner: false,
@@ -646,7 +648,9 @@ jQuery(function($){
                 App.Player.currentAgents = agents
 
                 //display back-to-back
-                App.fillDetailedMatchStatistics(App.Player.currentAgents[0], 'https://bit.ly/2gKJrFY', 0, App.Player.currentAgents[1], 'https://www.kaagent.be/images/community/kaagent_foundation_transp.png', 0, '30 September 2016', '20:35');
+                var player1 = App.Player.players.find(({ playerName }) => playerName === App.Player.currentAgents[0])
+                var player2 = App.Player.players.find(({ playerName }) => playerName === App.Player.currentAgents[1])
+                App.fillDetailedMatchStatistics(player1.playerName, player1.profileImage, 0, player2.playerName, player2.profileImage, 0, '30 September 2016', '20:35');
                 // $('#backToBack').html("<div id='"+App.Player.currentAgents[0]+"' class='playerScore player1Score'><span class='score'>0</span><span class='playerName'>"+App.Player.currentAgents[0]+"</span></div>")
                 // $('#backToBack').append("<div id='"+App.Player.currentAgents[1]+"' class='playerScore player2Score'><span class='playerName'>"+App.Player.currentAgents[1]+"</span><span class='score'>0</span></div>")
 
@@ -827,6 +831,7 @@ jQuery(function($){
                 if(IO.socket.socket.sessionid === data.mySocketId){
                     App.myRole = 'Player';
                     App.gameId = data.gameId;
+                    App.Player.profileImage = data.profileImage;
 
                     $('#playerWaitingMessage')
                         .append('<p/>')
