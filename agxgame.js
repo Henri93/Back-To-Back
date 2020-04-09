@@ -182,7 +182,7 @@ function playerJoinGame(data) {
 
         // Join the room
         sock.join(data.gameId);
-        giphy.random(data.playerName).then(function (res) {
+        giphy.random('puppy').then(function (res) {
             data.profileImage = res["data"]["images"]["downsized_large"]["url"]
             // Emit an event notifying the clients that the player has joined the room.
             io.sockets.in(data.gameId).emit('playerJoinedRoom', data);

@@ -488,15 +488,23 @@ jQuery(function($){
                 if (data.round === App.currentRound){
 
                     var playerVoting = App.Host.players.find(({ playerName }) => playerName === data.playerName)
-
-                    if(playerVoting.vote && playerVoting.vote !== ""){
-                        var $pScore = $('#' + playerVoting.vote).find('.score');
-                        $pScore.text( +$pScore.text() - 1 );
-                    }
-
+                    let previousVote = playerVoting.vote
                     playerVoting.vote = data.answer;
-                    var $pScore = $('#' + data.answer).find('.score');
-                    $pScore.text( +$pScore.text() + 1 );
+
+                    if($('.homecomming-team.score').attr('id') === (data.answer+"Score") && $('.away-team.score').attr('id') === (previousVote+"Score")){
+                        //add one to home and remove one from away
+                        App.updateScore(data.answer, parseInt($('.homecomming-team.score').text()) + 1, previousVote, parseInt($('.away-team.score').text()) - 1)
+                    }else if($('.homecomming-team.score').attr('id') === (previousVote+"Score") && $('.away-team.score').attr('id') === (data.answer+"Score")){
+                        //add one to away and remove one from home
+                        App.updateScore(previousVote, parseInt($('.homecomming-team.score').text()) - 1, data.answer, parseInt($('.away-team.score').text()) + 1)
+                    }else if($('.homecomming-team.score').attr('id') === (data.answer+"Score") && previousVote === ""){
+                        //add one to home
+                        App.updateScore(data.answer, parseInt($('.homecomming-team.score').text()) + 1, previousVote, 0)
+                    }else if(previousVote === "" && $('.away-team.score').attr('id') === (data.answer+"Score")){
+                        //add one to away
+                        App.updateScore(previousVote, 0, data.answer, parseInt($('.away-team.score').text()) + 1)
+                    }
+                    
                 }
             },
 
@@ -534,13 +542,12 @@ jQuery(function($){
                 IO.socket.emit('voteOutcome', data);
 
                 var $secondsLeft = $('#questionTimer');
-                App.countDown($secondsLeft, 10, function(){
+                App.countDown($secondsLeft, 15, function(){
                     //clear votes
                     for(var i = 0; i < App.Host.players.length; i++){
                         App.Host.players[i].vote = ""
                     }
-                    $("#"+App.Host.currentAgents[0]).find('.score').text("0")
-                    $("#"+App.Host.currentAgents[1]).find('.score').text("0")
+                    App.updateScore(App.Host.currentAgents[0], 0, App.Host.currentAgents[1], 0)
 
                     //get a new questioner if any left
                     console.log("questioner done " + questioner)
@@ -689,14 +696,14 @@ jQuery(function($){
             voteOutcome: function (data) {
                 $('#questionTimer').text("");
                 $('#instruction').text(data.outcome);
+                $('#question').text("")
                 $("#winAudio")[0].play()
 
                 //clear votes
                 for(var i = 0; i < App.Player.players.length; i++){
                         App.Player.players[i].vote = ""
                 }
-                $("#"+App.Player.currentAgents[0]).find('.score').text("0")
-                $("#"+App.Player.currentAgents[1]).find('.score').text("0")
+                App.updateScore(App.Player.currentAgents[0], 0, App.Player.currentAgents[1], 0)
             },
 
             newQuestion : function(data) {
@@ -709,7 +716,7 @@ jQuery(function($){
                     $(".playerScore").on('click', function(){ 
                         //pass click to other players
                         var $btn = $(this);      
-                        var answer = $btn.attr('id'); 
+                        var answer = $btn.find('.name').text(); 
 
                         // Send the player info and tapped word to the server so
                         // the host can check the answer.
@@ -922,19 +929,23 @@ jQuery(function($){
                 if (data.round === App.currentRound){
 
                     var playerVoting = App.Player.players.find(({ playerName }) => playerName === data.playerName)
-                    
-                    if(!App.Player.isSecret){
-                        if(playerVoting.vote && playerVoting.vote !== ""){
-                            var $pScore = $('#' + playerVoting.vote).find('.score');
-                            $pScore.text( +$pScore.text() - 1 );
-                        }
-                    }
-                    
+                    let previousVote = playerVoting.vote
                     playerVoting.vote = data.answer;
-
-                    if(!App.Player.isSecret){
-                        var $pScore = $('#' + data.answer).find('.score');
-                        $pScore.text( +$pScore.text() + 1 );
+                    
+                    if(!App.Player.isSecret || (App.Player.isSecret && data.playerName === App.Player.myName)){
+                        if($('.homecomming-team.score').attr('id') === (data.answer+"Score") && $('.away-team.score').attr('id') === (previousVote+"Score")){
+                            //add one to home and remove one from away
+                            App.updateScore(data.answer, parseInt($('.homecomming-team.score').text()) + 1, previousVote, parseInt($('.away-team.score').text()) - 1)
+                        }else if($('.homecomming-team.score').attr('id') === (previousVote+"Score") && $('.away-team.score').attr('id') === (data.answer+"Score")){
+                            //add one to away and remove one from home
+                            App.updateScore(previousVote, parseInt($('.homecomming-team.score').text()) - 1, data.answer, parseInt($('.away-team.score').text()) + 1)
+                        }else if($('.homecomming-team.score').attr('id') === (data.answer+"Score") && previousVote === ""){
+                            //add one to home
+                            App.updateScore(data.answer, parseInt($('.homecomming-team.score').text()) + 1, previousVote, 0)
+                        }else if(previousVote === "" && $('.away-team.score').attr('id') === (data.answer+"Score")){
+                            //add one to away
+                            App.updateScore(previousVote, 0, data.answer, parseInt($('.away-team.score').text()) + 1)
+                        }
                     }
                 }
             },
@@ -1015,32 +1026,34 @@ jQuery(function($){
 
         fillDetailedMatchStatistics : function(homeCommingName, homeCommingLogo, homeCommingScore, awayName, awayLogo, awayScore, date, time) {
                     $('.homecomming-team.logo').css('background-image', 'url("' + homeCommingLogo + '")');
-
                     $('.homecomming-team.name').text(homeCommingName);
-
                     $('.homecomming-team.score').text(homeCommingScore);
+                    $('.homecomming-team.score').attr('id', homeCommingName+"Score");
 
                     $('.away-team.logo').css('background-image', 'url("' + awayLogo + '")');
-
                     $('.away-team.name').text(awayName);
-
                     $('.away-team.score').text(awayScore);
-                    
-                    var $awayTeamScoreEl = $('.away-team.score');
-                    var $homeCommingTeamScoreEl = $('.homecomming-team.score');
-                    var $awayTeamScore = +$awayTeamScoreEl.text();
-                    var $homeCommingTeamScore = +$homeCommingTeamScoreEl.text();
-                    
-                    if($awayTeamScore == $homeCommingTeamScore) {
-                        $($awayTeamScoreEl, $homeCommingTeamScoreEl).addClass('winner');
-                    } else if($awayTeamScore > $homeCommingTeamScore) {
-                        $awayTeamScoreEl.addClass('winner');
-                        $homeCommingTeamScoreEl.removeClass('winner');
-                    } else {
-                        $awayTeamScoreEl.removeClass('winner');
-                        $homeCommingTeamScoreEl.addClass('winner');
-                    }
+                    $('.away-team.score').attr('id', awayName+"Score");
+            },
+
+        updateScore : function(homeName, homeScore, awayName, awayScore){
+            console.log("update score " + homeScore + "-" + awayScore)
+            var $homeScoreEl = $('#' + homeName + "Score");
+            var $awayScoreEl = $('#' + awayName + "Score");
+            $homeScoreEl.text(homeScore);
+            $awayScoreEl.text(awayScore);
+            
+            if(homeScore == awayScore) {
+                $homeScoreEl.removeClass('winner');
+                $awayScoreEl.removeClass('winner');
+            } else if(awayScore > homeScore) {
+                $awayScoreEl.addClass('winner');
+                $homeScoreEl.removeClass('winner');
+            } else {
+                $awayScoreEl.removeClass('winner');
+                $homeScoreEl.addClass('winner');
             }
+        }
 
     };
 

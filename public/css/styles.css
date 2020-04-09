@@ -243,7 +243,7 @@ html, body {
     font-weight: 400;
     height: 50%;
     width: 50%;
-    margin: auto;
+    margin: 5em auto;
     bottom: 0;
     left: 0;
     top: 0;
@@ -277,46 +277,7 @@ html, body {
 #backToBack {
     height: 10%;
     width: 100%;
-    /*position: fixed;*/
     top: 0;
-}
-
-.playerScore {
-    width: 50%;
-    padding: 0;
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 400;
-    height: 100%;
-    color: #c3073f;
-}
-
-.playerScore span {
-    display: inline-block;
-    font-size: 1.4EM;
-    padding: 2%;
-    min-width: 10%;
-    margin: 0;
-}
-
-.playerScore .score {
-    text-align: center;
-    color: #1a1a1d;
-    background-color: #c3073f;
-}
-
-.playerScore .playerName {
-    width: 77%;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-.player1Score {
-    float: left;
-}
-
-.player2Score {
-    float: right;
-    text-align: right;
 }
 
 
@@ -330,7 +291,7 @@ html, body {
     height: 20%;
     padding-top: 10%;
     font-size: 2em;
-    color: #c3073f
+    color: #c3073f;
 }
 
 .btnGameOver {
@@ -385,8 +346,7 @@ tr:nth-child(odd) {
     justify-content: center;
     align-items: center;
     z-index: 500;
-    color: #F3EFF5;
-    background-color: #454955;
+    color: #c3073f;
     width: 100%;
     -webkit-box-shadow: 0px 0px 17px 3px rgba(0,0,0,0.75);
     -moz-box-shadow: 0px 0px 17px 3px rgba(0,0,0,0.75);
@@ -407,7 +367,7 @@ tr:nth-child(odd) {
     content: '';
     display: block;
     width: 45%;
-    border-bottom: 2px solid #99C24D;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
     margin: 0 auto;
     margin-top: 0.2em;
 }
@@ -454,7 +414,7 @@ tr:nth-child(odd) {
     float: left;
     margin-top: 6px;
     border: 0;
-    border-bottom: 2px dashed #ccc;
+    border-bottom: 2px dashed #c3073f;
 }
 
 .circle {
@@ -463,7 +423,7 @@ tr:nth-child(odd) {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    border: 2px solid #F3EFF5;
+    border: 2px solid #c3073f;
     transform:rotate(360deg); /* for smoother circle */
     -ms-transform:rotate(360deg);
     -moz-transform:rotate(360deg);
@@ -485,20 +445,17 @@ tr:nth-child(odd) {
     float: left;
     text-align: center;
     line-height: 60px;
-    border: 2px solid #F3EFF5;
-    border-right: 1px solid #F3EFF5;
-    background-color: #454955;
+    color: #c3073f;
+    background-color: #1a1a1d;
     font-size: 2em;
     font-family: 'Roboto', sans-serif;
 }
 
 .away-team.score {
     float: right;
-    border-right: 2px solid #F3EFF5;
-    border-left: 1px solid #F3EFF5;
 }
 
 .winner {
-    color: #02111B;
-    background-color: #99C24D;
+    color: #1a1a1d;
+    background-color: #c3073f;
 }
