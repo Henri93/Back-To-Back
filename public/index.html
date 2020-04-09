@@ -42,15 +42,28 @@
             </div>
 
             
-
-            <div class="buttons">
-
-                <button id="btnCreateGame" class="btn left">CREATE</button>
-                <button id="btnJoinGame" class="btn right">JOIN</button>
-                <div style="clear:both"></div>
-                <div id="mid">
-                <input class="btn" type="button" value="RANKS" id="leaderboard">
+            <div class="row">
+                <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12"></div>
+                
+                <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12 text-center buttons">
+                    <button id="btnCreateGame" class="btn">CREATE</button>
                 </div>
+
+                <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12 text-center buttons">
+                    <button id="btnJoinGame" class="btn">JOIN</button>
+                </div>
+
+                <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12"></div>
+
+                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 text-center buttons">
+                    <button id="leaderboard" class="btn" >RANKS</button>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12"></div>
             </div>
 
         </div>
@@ -97,7 +110,7 @@
     <script id="host-game-template" type="text/template">
         
         <div id="match-details-container">
-            <div id="title">MATCH STATISTICS</div>
+            <div id="title">Back-To-Back</div>
             <div id="teams-container">
                 <div class="homecomming-team flexbox-items playerScore">
                     <div class="homecomming-team logo"></div>
@@ -132,12 +145,18 @@
 
     <!-- This is the 'Questioner' screen. It displays the players back to back and a form for submitting a question -->
     <script id="questioner-game-template" type="text/template">
-        <div id="questionForm" class="input-group mb-3">
-            <textarea class="form-control" placeholder="Enter Question" aria-label="Enter Question" id="questionBox" rows="3"></textarea>
-            <div class="input-group-append">
-              <button class="btn" id="submitQuestion" type="button">Submit</button>
+        <div class="row">
+            <div class="col-lg-10 col-md-10 col-sm-12 col-xs-12">
+                <div id="questionForm" class="input-group">
+                    <textarea class="form-control" placeholder="Enter Question" aria-label="Enter Question" id="questionBox" rows="3"></textarea>
+                </div>
             </div>
-          </div>
+            <div class="col-lg-2 col-md-2 col-sm-12 col-xs-12">
+                
+                <button class="btn" id="submitQuestion" type="button">Submit</button>
+                
+            </div>
+        </div>
     </script>
 
 

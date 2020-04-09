@@ -182,11 +182,18 @@ function playerJoinGame(data) {
 
         // Join the room
         sock.join(data.gameId);
-        giphy.random('puppy').then(function (res) {
-            data.profileImage = res["data"]["images"]["downsized_large"]["url"]
+
+        giphy.random({
+            tag: 'funny',
+            rating: 'r',
+            fmt: 'json'
+        }, function (err, res) {
+            console.log(res["data"]["images"])
+            data.profileImage = res["data"]["images"]["fixed_height"]["url"]
             // Emit an event notifying the clients that the player has joined the room.
             io.sockets.in(data.gameId).emit('playerJoinedRoom', data);
         });
+
 
         db.serialize(function()
             {

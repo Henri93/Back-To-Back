@@ -543,6 +543,7 @@ jQuery(function($){
 
                 var $secondsLeft = $('#questionTimer');
                 App.countDown($secondsLeft, 15, function(){
+                    $('#questionTimer').text("")
                     //clear votes
                     for(var i = 0; i < App.Host.players.length; i++){
                         App.Host.players[i].vote = ""
@@ -663,7 +664,7 @@ jQuery(function($){
 
                 if(agents.indexOf(App.Player.myName) >= 0){
                     App.Player.isSecret = true;
-                    $('#instruction').text("You are back to back, Wait for a question!")
+                    $('#instruction').text("Wait for a question!")
                 }else{
                     App.Player.isSecret = false;
                 }
@@ -675,6 +676,12 @@ jQuery(function($){
             },
 
             assignQuestioner: function (name) {
+                //clear votes
+                for(var i = 0; i < App.Player.players.length; i++){
+                    App.Player.players[i].vote = ""
+                }
+                App.updateScore(App.Player.currentAgents[0], 0, App.Player.currentAgents[1], 0)
+
                 App.Player.currentQuestioner = name
 
                 if(App.Player.myName === name){
@@ -691,19 +698,15 @@ jQuery(function($){
                 if(!App.Player.isSecret && !App.Player.isQuestioner){
                     $('#instruction').text(name + " is thinking...")
                 }
+
+                $('#question').text("")
             },
 
             voteOutcome: function (data) {
                 $('#questionTimer').text("");
                 $('#instruction').text(data.outcome);
-                $('#question').text("")
+                $('#question').text("picking someone to ask a question...")
                 $("#winAudio")[0].play()
-
-                //clear votes
-                for(var i = 0; i < App.Player.players.length; i++){
-                        App.Player.players[i].vote = ""
-                }
-                App.updateScore(App.Player.currentAgents[0], 0, App.Player.currentAgents[1], 0)
             },
 
             newQuestion : function(data) {
@@ -711,7 +714,7 @@ jQuery(function($){
 
                 //if back to back then prompt to answer by clicking
                 if(App.Player.isSecret){
-                    $('#instruction').text(data.playerName+" asked a question! Click a person to vote.")
+                    $('#instruction').text(data.playerName+" asked a question!")
                     //then start timer to answer and allow clicking
                     $(".playerScore").on('click', function(){ 
                         //pass click to other players
@@ -733,6 +736,7 @@ jQuery(function($){
                     
                     var $secondsLeft = $('#questionTimer');
                     App.countDown($secondsLeft, 10, function(){
+                        $('#questionTimer').text("")
                         //disable clicking and display results
                         $(".playerScore").off('click');
 
@@ -786,6 +790,8 @@ jQuery(function($){
                     gameId : +($('#inputGameId').val()),
                     playerName : $('#inputPlayerName').val() || 'anon'
                 };
+
+                $('#btnStart').remove()
 
                 // Send the gameId and playerName to the server
                 IO.socket.emit('playerJoinGame', data);
